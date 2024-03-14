@@ -3,20 +3,38 @@ import StripeTerminal
 
 extension PaymentIntent {
     func toApi() -> PaymentIntentApi {
+        let json: [AnyHashable : Any] = self.originalJSON
+        let amountCapturable = json["amount_capturable"] as? Double
+        let amountReceived = json["amount_received"] as? Double
+        let applicationFeeAmount = json["application_fee_amount"] as? Double
+        let clientSecret = json["client_secret"] as? String
+        let onBehalfOf = json["on_behalf_of"] as? String
+        let confirmationMethod = json["confirmation_method"] as? String
+
+        var updatedConfirmationMethod: ConfirmationMethodApi?
+        
+        if confirmationMethod == "automatic" {
+            updatedConfirmationMethod = ConfirmationMethodApi.automatic
+        } else if confirmationMethod == "manual" {
+            updatedConfirmationMethod = ConfirmationMethodApi.automatic
+        } else {
+            updatedConfirmationMethod = nil
+        }
+        
         return PaymentIntentApi(
             amount: Double(amount),
-            amountCapturable: nil,
+            amountCapturable: amountCapturable ?? nil,
             amountDetails: amountDetails?.toApi(),
-            amountReceived: nil,
+            amountReceived: amountReceived ?? nil,
             amountTip: amountTip != nil ? Double(truncating: amountTip!) : nil,
-            applicationFeeAmount: nil,
+            applicationFeeAmount: applicationFeeAmount,
             applicationId: nil,
             canceledAt: nil,
             cancellationReason: nil,
             captureMethod: captureMethod.toApi(),
             charges: charges.map { $0.toApi() },
-            clientSecret: nil,
-            confirmationMethod: nil,
+            clientSecret: clientSecret ?? nil,
+            confirmationMethod: updatedConfirmationMethod,
             created: created,
             currency: currency,
             customerId: nil,
@@ -24,7 +42,7 @@ extension PaymentIntent {
             id: stripeId!,
             invoiceId: nil,
             metadata: metadata ?? [:],
-            onBehalfOf: nil,
+            onBehalfOf: onBehalfOf ?? nil,
             paymentMethod: paymentMethod?.toApi(),
             paymentMethodId: paymentMethodId,
             receiptEmail: nil,
